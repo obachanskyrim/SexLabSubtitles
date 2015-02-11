@@ -228,7 +228,7 @@ Function ShowSubtitle(String asMessage, String asColor = "#FFFFFF")
 	If(!Subtitle_Prepare())
 		Return
 	EndIf
-	Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.SS.SsubtitleTextArea.ShowSubtitle")
+	Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.SsubtitleTextArea.ShowSubtitle")
 	If(iHandle)
 		UICallback.PushString(iHandle, asMessage)
 		UICallback.PushString(iHandle, asColor)
@@ -241,7 +241,7 @@ Function ShowSubtitleWithName(String asName, String asMessage)
 	If(!Subtitle_Prepare())
 		Return
 	EndIf
-	Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.SS.SsubtitleTextArea.ShowSubtitleWithName")
+	Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.SsubtitleTextArea.ShowSubtitleWithName")
 	If(iHandle)
 		UICallback.PushString(iHandle, asName)
 		UICallback.PushString(iHandle, asMessage)
@@ -254,7 +254,7 @@ Function ShowSubtitle2(String asMessage, String asColor = "#FFFFFF")
 	If(!Subtitle_Prepare())
 		Return
 	EndIf
-	Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.SS.SsubtitleTextArea.ShowSubtitle2")
+	Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.SsubtitleTextArea.ShowSubtitle2")
 	If(iHandle)
 		UICallback.PushString(iHandle, asMessage)
 		UICallback.PushString(iHandle, asColor)
@@ -267,7 +267,7 @@ Function ShowSubtitleWithName2(String asName, String asMessage)
 	If(!Subtitle_Prepare())
 		Return
 	EndIf
-	Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.SS.SsubtitleTextArea.ShowSubtitleWithName2")
+	Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.SsubtitleTextArea.ShowSubtitleWithName2")
 	If(iHandle)
 		UICallback.PushString(iHandle, asName)
 		UICallback.PushString(iHandle, asMessage)
@@ -280,7 +280,7 @@ Function ShowSubtitleSuper(String asName1, String asName2, String asMessage)
 	If(!Subtitle_Prepare())
 		Return
 	EndIf
-	Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.SS.SsubtitleTextArea.ShowSubtitleSuper")
+	Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.SsubtitleTextArea.ShowSubtitleSuper")
 	If(iHandle)
 		UICallback.PushString(iHandle, asName1)
 		UICallback.PushString(iHandle, asName2)
@@ -297,22 +297,23 @@ Bool Function Subtitle_Prepare() global
 		If(!iHandle)
 			Return False
 		EndIf
-		UICallback.PushString(iHandle, "SS")
+		UICallback.PushString(iHandle, "ss_container")
 		UICallback.PushInt(iHandle, -16380)
 		If(!UICallback.Send(iHandle))
 			Return False
 		EndIf
-		UI.InvokeString("HUD Menu", "_root.HUDMovieBaseInstance.SS.loadMovie", "Widgets/obachan/SsubtitleTextArea.swf")
+		UI.InvokeString("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.loadMovie", "obachan/SsubtitleTextArea.swf")
 		Utility.Wait(0.5)
 		iVersion = UI.GetInt("HUD Menu", "_global.oba.SsubtitleTextArea.SS_VERSION")
 		If(iVersion == 0)
-			UI.InvokeString("HUD Menu", "_root.HUDMovieBaseInstance.SS.loadMovie", "exported/Widgets/obachan/SsubtitleTextArea.swf")
+			UI.InvokeString("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.loadMovie", "exported/obachan/SsubtitleTextArea.swf")
 			Utility.Wait(0.5)
 			iVersion = UI.GetInt("HUD Menu", "_global.oba.SsubtitleTextArea.SS_VERSION")
 			If(iVersion == 0)
 				Debug.Trace("@ SSubtitleText - HUDÇÃï÷èÊÇ…é∏îsÇµÇ‹ÇµÇΩ")
 				Return False
 			EndIf
+			UI.InvokeString("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.SetRootPath", "exported/")
 		EndIf
 	EndIf
 	Return True
