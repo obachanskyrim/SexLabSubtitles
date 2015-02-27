@@ -50,7 +50,7 @@ event OnPageReset(string page)
 	; •\Ž†
 	if page == ""
 		SetTitleText("$MCM_modCatchCopy")
-		LoadCustomContent("exported/Widgets/obachan/S_Subtitles_Logo.swf", 95, 30)
+		LoadCustomContent("exported/obachan/S_Subtitles_Logo.swf", 95, 30)
 		return
 	endIf
 	UnloadCustomContent()
@@ -119,6 +119,14 @@ EndEvent
 		else
 			AddTextOptionST("text_reset", "$MCM_page1reset", "$MCM_shareAction", OPTION_FLAG_DISABLED)
 		endIf
+
+		SetCursorPosition(1)
+
+		AddHeaderOption("$MCM_page1head_version")
+		AddTextOption("$ModVersion", SSC.ModVersion)
+		AddTextOption("$HUDVersion", SSC.HUDstringVersion)
+		AddEmptyOption()
+		AddTextOption("$SSLVersion", SSC.SSLversion)
 
 	EndFunction
 	; ----------------------------------------------------------------------

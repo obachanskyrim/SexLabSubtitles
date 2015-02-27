@@ -4,10 +4,15 @@ ScriptName secondSubtitleTextHUD Extends Quest
 Quest Property SubtitletextControl auto ; 汎用字幕クエスト
 secondSubtitleText SSC ; 汎用字幕コントロールスクリプト
 SubtitleSetSetting SSetting ; 字幕セットの設定
+
 float Property interval = 6.0 auto ; 汎用字幕表示の間隔
 int Property menuKey = 48 auto ; メニューの呼び出しキー　デフォルト「B」
 string[] Property SetMenu auto ; 字幕のセット名のリスト
 bool Property isControlFin = false auto ; 汎用字幕クエストを完全終了させた場合、ONにする
+
+string Property pr_currentAnimName auto
+string Property pr_stageInfo auto
+string Property pr_tags auto
 
 Function SetMenuInit() ; メニューリストの登録
 	; debug.trace("# SetMenuInit開始")
@@ -44,10 +49,16 @@ Event OnKeyDown(Int KeyCode)
 			string currentsetname = SSetting.getNameCSname(situation) ; 現在適用されている字幕セット名
 			int currentnum = SetMenu.find(currentsetname)
 			string currentSituation = SSetting.common_situation[situation] ; 現在のシチュエーションの汎用名
+			string title = "$SMENU_title"
 			string info = "$SMENU_info"
 			string shead = "$SMENU_SHead"
 			string chead = "$SMENU_CHead"
-			int choice = ShowMenuList(info, shead, currentSituation, chead, SetMenu, currentnum, 0)
+			string pr_animTitle = "$menu_animTitle"
+			string pr_headAnim = "$menu_headAnim"
+			string pr_headStage = "$menu_headStage"
+			string pr_headTag = "$menu_headTag"
+
+			int choice = ShowMenuList(info, title, shead, currentSituation, chead, SetMenu, currentnum, 0, pr_animTitle, pr_headAnim, pr_currentAnimName, pr_headStage, pr_stageInfo, pr_headTag, pr_tags)
 			; debug.trace("# choiceは" + choice)
 			If choice == 0
 				SSC.repeatUpdate = false
@@ -147,6 +158,7 @@ endProperty
 /;
 Bool bMenuOpen
 String sTitle
+String sInfo
 String situationHead
 String situationM
 String commonHead
@@ -156,14 +168,22 @@ String[] sOptions
 Int iStartIndex
 Int iDefaultIndex
 Int iInput
+String animTitle
+String headAnim
+String sAnim
+String headStage
+String sStage
+String headTag
+String sTag
 
 ; メニューリストの表示
-Int Function ShowMenuList(String asTitle = "", String asSituHead, String asSitu, String asCommonHead, String[] asOptions, Int aiStartIndex, Int aiDefaultIndex)
+Int Function ShowMenuList(String asInfo, String asTitle, String asSituHead, String asSitu, String asCommonHead, String[] asOptions, Int aiStartIndex, Int aiDefaultIndex, String asAnimTitle, String asHeadAnim, String asAnim, String asHeadStage,String asStage,String asHeadTag,String asTag)
 	If(bMenuOpen)
 		Return -1
 	EndIf
 	bMenuOpen = True
 	iInput = -1
+	sInfo = asInfo
 	sTitle = asTitle
 	situationHead = asSituHead
 	situationM = asSitu
@@ -172,6 +192,13 @@ Int Function ShowMenuList(String asTitle = "", String asSituHead, String asSitu,
 	iStartIndex = aiStartIndex
 	iDefaultIndex = aiDefaultIndex
 	SubtitleMenuList_Open(Self as Form)
+	animTitle = asAnimTitle
+	headAnim = asHeadAnim
+	sAnim = asAnim
+	headStage = asHeadStage
+	sStage = asStage
+	headTag = asHeadTag
+	sTag = asTag
 	While(bMenuOpen)
 		Utility.WaitMenuMode(0.1)
 	EndWhile
@@ -187,17 +214,25 @@ Function SubtitleMenuList_Open(Form akClient) Global
 	UI.OpenCustomMenu("skyui/SubtitleMenuList")
 EndFunction
 
-Function SubtitleMenuList_SetData(String asTitle = "", String asSituHead, String asSitu, String asCommonHead, String[] asOptions, Int aiStartIndex, Int aiDefaultIndex) Global
+Function SubtitleMenuList_SetData(String asInfo, String asTitle, String asSituHead, String asSitu, String asCommonHead, String[] asOptions, Int aiStartIndex, Int aiDefaultIndex, String asAnimTitle, String asHeadAnim, String asAnim, String asHeadStage,  String asStage, String asHeadTag, String asTag) Global
 	UI.InvokeNumber("CustomMenu", "_root.SubtitleMenuList.setPlatform", (Game.UsingGamepad() as Int))
 	UI.InvokeStringA("CustomMenu", "_root.SubtitleMenuList.initListData", asOptions)
 	Int iHandle = UICallback.Create("CustomMenu", "_root.SubtitleMenuList.initListParams")
 	If(iHandle)
+		UICallback.PushString(iHandle, asInfo)
 		UICallback.PushString(iHandle, asTitle)
 		UICallback.PushString(iHandle, asSituHead)
 		UICallback.PushString(iHandle, asSitu)
 		UICallback.PushString(iHandle, asCommonHead)
 		UICallback.PushInt(iHandle, aiStartIndex)
 		UICallback.PushInt(iHandle, aiDefaultIndex)
+		UICallback.PushString(iHandle, asAnimTitle)
+		UICallback.PushString(iHandle, asHeadAnim)
+		UICallback.PushString(iHandle, asAnim)
+		UICallback.PushString(iHandle, asHeadStage)
+		UICallback.PushString(iHandle, asStage)
+		UICallback.PushString(iHandle, asHeadTag)
+		UICallback.PushString(iHandle, asTag)
 		UICallback.Send(iHandle)
 	EndIf
 EndFunction
@@ -209,7 +244,7 @@ EndFunction
 
 Event OnSubtitleMenuListOpen(String asEventName, String asStringArg, Float afNumArg, Form akSender)
 	If(asEventName == "SubtitleMenuList_Open")
-		SubtitleMenuList_SetData(sTitle, situationHead, situationM, commonHead, sOptions, iStartIndex, iDefaultIndex)
+		SubtitleMenuList_SetData(sInfo, sTitle, situationHead, situationM, commonHead, sOptions, iStartIndex, iDefaultIndex, animTitle, headAnim, sAnim, headStage, sStage, headTag, sTag)
 	EndIf
 EndEvent
 
@@ -289,6 +324,60 @@ Function ShowSubtitleSuper(String asName1, String asName2, String asMessage)
 	EndIf
 EndFunction
 
+; エリア2スーパー　テキスト先頭の#u、#sで名前を自動判別
+Function ShowSubtitleSuper2(String asName1, String asName2, String asMessage)
+	If(!Subtitle_Prepare())
+		Return
+	EndIf
+	Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.SsubtitleTextArea.ShowSubtitleSuper2")
+	If(iHandle)
+		UICallback.PushString(iHandle, asName1)
+		UICallback.PushString(iHandle, asName2)
+		UICallback.PushString(iHandle, asMessage)
+		UICallback.Send(iHandle)
+	EndIf
+EndFunction
+
+; エリア3（画面中央）のテキストのみ表示
+Function ShowSubtitle3(String asMessage, String asColor = "#FFFFFF")
+	If(!Subtitle_Prepare())
+		Return
+	EndIf
+	Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.SsubtitleTextArea.ShowSubtitle3")
+	If(iHandle)
+		UICallback.PushString(iHandle, asMessage)
+		UICallback.PushString(iHandle, asColor)
+		UICallback.Send(iHandle)
+	EndIf
+EndFunction
+
+; エリア3（画面中央）の字幕表示
+Function ShowSubtitleWithName3(String asName, String asMessage)
+	If(!Subtitle_Prepare())
+		Return
+	EndIf
+	Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.SsubtitleTextArea.ShowSubtitleWithName3")
+	If(iHandle)
+		UICallback.PushString(iHandle, asName)
+		UICallback.PushString(iHandle, asMessage)
+		UICallback.Send(iHandle)
+	EndIf
+EndFunction
+
+; エリア3スーパー　テキスト先頭の#u、#sで名前を自動判別
+Function ShowSubtitleSuper3(String asName1, String asName2, String asMessage)
+	If(!Subtitle_Prepare())
+		Return
+	EndIf
+	Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.SsubtitleTextArea.ShowSubtitleSuper3")
+	If(iHandle)
+		UICallback.PushString(iHandle, asName1)
+		UICallback.PushString(iHandle, asName2)
+		UICallback.PushString(iHandle, asMessage)
+		UICallback.Send(iHandle)
+	EndIf
+EndFunction
+
 ; 字幕表示の準備
 Bool Function Subtitle_Prepare() global
 	Int iVersion = UI.GetInt("HUD Menu", "_global.oba.SsubtitleTextArea.SS_VERSION")
@@ -319,3 +408,32 @@ Bool Function Subtitle_Prepare() global
 	Return True
 EndFunction
 
+; 字幕表示用swfのバージョンジェック
+int Function Subtitle_GetVersion() global
+	Int iVersion = UI.GetInt("HUD Menu", "_global.oba.SsubtitleTextArea.SS_VERSION")
+	If(iVersion == 0)
+		Int iHandle = UICallback.Create("HUD Menu", "_root.HUDMovieBaseInstance.createEmptyMovieClip")
+		If(!iHandle)
+			Return -1
+		EndIf
+		UICallback.PushString(iHandle, "ss_container")
+		UICallback.PushInt(iHandle, -16380)
+		If(!UICallback.Send(iHandle))
+			Return -1
+		EndIf
+		UI.InvokeString("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.loadMovie", "obachan/SsubtitleTextArea.swf")
+		Utility.Wait(0.5)
+		iVersion = UI.GetInt("HUD Menu", "_global.oba.SsubtitleTextArea.SS_VERSION")
+		If(iVersion == 0)
+			UI.InvokeString("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.loadMovie", "exported/obachan/SsubtitleTextArea.swf")
+			Utility.Wait(0.5)
+			iVersion = UI.GetInt("HUD Menu", "_global.oba.SsubtitleTextArea.SS_VERSION")
+			If(iVersion == 0)
+				Debug.Trace("@ SSubtitleText - HUDの便乗に失敗しました")
+				Return 0
+			EndIf
+			UI.InvokeString("HUD Menu", "_root.HUDMovieBaseInstance.ss_container.SetRootPath", "exported/")
+		EndIf
+	EndIf
+	Return iVersion
+EndFunction

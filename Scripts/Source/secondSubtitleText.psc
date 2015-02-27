@@ -46,6 +46,13 @@ endProperty
 bool property repeatUpdate = false auto ; true中のみOnUpdateし字幕を表示する
 bool property repeatRandom = false auto ; true中はランダムで字幕表示 (v2.2)
 
+; v2.3 Version check
+string Property ModVersion auto
+string Property SSLversion auto
+int Property iSSLversion auto
+int Property HUDversion auto
+string Property HUDstringVersion auto
+
 ;/======================================================/;
 
 Function Initialize() ; ゲームがロードされるたびに呼び出し
@@ -53,6 +60,15 @@ Function Initialize() ; ゲームがロードされるたびに呼び出し
 	Player = Game.GetPlayer()
 	SSetting = (self as Quest) as SubtitleSetSetting
 	registerEvent()
+	ModVersion = ssubtitletextUtil.GetVersionString()
+	SSLversion = SexLabUtil.GetStringVer()
+	iSSLversion = SexLabUtil.GetVersion()
+	HUDversion = secondSubtitleTextHUD.Subtitle_GetVersion()
+	If HUDversion == 0
+		HUDstringVersion = "$VersionFail"
+	else
+		HUDstringVersion = "v1." + HUDversion
+	endIf
 EndFunction
 
 Function CommonSetInit() ; 汎用字幕の準備（Mod導入初回＆更新時）
@@ -186,6 +202,24 @@ EndFunction
 			bool isCreture = animation.IsCreature
 			; debug.trace("# SexLab Subtitles - スレッド:" + sexlabID + "ステージ" + currentStage + "スタート")
 			; debug.trace("# 【" + animname + "】再生中 - 最終ステージは" + maxStage + "、クリーチャーは" + isCreture)
+
+			; v2.3 Animation Info
+			SS.pr_currentAnimName = animname
+			SS.pr_stageInfo = currentStage + " / " + maxStage
+
+			string [] tags = animation.getTags()
+			string tagInfo = ""
+			int clen = 0
+			while (clen < tags.length)
+				If !(tags[clen] == "")
+					tagInfo = tagInfo + tags[clen]
+					If !(clen == (tags.length - 1))
+						tagInfo += ", "
+					endIf
+				endIf
+				clen += 1
+			endwhile
+			SS.pr_tags = tagInfo
 
 			string currentTag
 			If animation.HasTag("Handjob")
